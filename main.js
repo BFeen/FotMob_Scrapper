@@ -11,33 +11,41 @@ Apify.main(async () => {
         const title = $(`title`).text();
         console.log(`The title of ${request.url} is: ${title}.`);
 
-        // const enqueued = await enqueueLinks({
-        //     $,
-        //     requestQueue,
-        //     selector: `a[href]`,
-        //     // pseudoUrls: ['https://www.fotmob.com/livescores/[\d+]/matchfacts[.*]'], 
-        //     // https://www.fotmob.com/livescores/3411669/matchfacts/arsenal-vs-everton?date=20210423 
-        //     baseUrl: request.loadedUrl,
-        // });
+        const enqueued = await enqueueLinks({
+            $,
+            requestQueue,
+            selector: `a[href]`,
+            pseudoUrls: ['https://www.fotmob.com/livescores/[\\d+]/matchfacts[.*]'], 
+            // https://www.fotmob.com/livescores/3411669/matchfacts/arsenal-vs-everton?date=20210423 
+            baseUrl: request.loadedUrl,
+        });
 
-        const teamElements = $(`span.css-1i87lf9-TeamName`);
-        const timeElements = $(`span.css-8o8lqm`);
+        /* 
+        PURL заработали
+        - разделить handleFunc на DETAILS и COMMON;
+        - получить новые адреса для извлечения Наименований команд и Времени\счета игры из DETAILS;
+        - изучить INPUT и OUTPUT;
+        - сформировать return result.
+        **/
 
-        const teamNames = [];
-        const time = [];
+        // const teamElements = $(`span.css-1i87lf9-TeamName`);
+        // const timeElements = $(`span.css-8o8lqm`);
 
-        const result = [];
+        // const teamNames = [];
+        // const time = [];
 
-        teamElements.each((i) => teamNames.push(teamElements.eq(i).text()));
-        timeElements.each((i) => time.push(timeElements.eq(i).text()));
+        // const result = [];
 
-        for (let i=0; i<timeElements.length; i++) {
-            result.push(`${teamNames.shift()} - ${time.shift()} - ${teamNames.shift()}`);
-        }
+        // teamElements.each((i) => teamNames.push(teamElements.eq(i).text()));
+        // timeElements.each((i) => time.push(timeElements.eq(i).text()));
 
-        console.log(result);
+        // for (let i=0; i<timeElements.length; i++) {
+        //     result.push(`${teamNames.shift()} - ${time.shift()} - ${teamNames.shift()}`);
+        // }
 
-        // console.log(`Enqueueing ${enqueued.length} URLs`);
+        // console.log(result);
+
+        console.log(`Enqueueing ${enqueued.length} URLs`);
     };
 
     const crawler = new Apify.CheerioCrawler({
