@@ -8,44 +8,23 @@ Apify.main(async () => {
     await requestQueue.addRequest({ url: `https://fotmob.com`});
 
     const handlePageFunction = async ({ request, $ }) => {
-        const title = $(`title`).text();
-        console.log(`The title of ${request.url} is: ${title}.`);
-
-        const enqueued = await enqueueLinks({
-            $,
-            requestQueue,
-            selector: `a[href]`,
-            pseudoUrls: ['https://www.fotmob.com/livescores/[\\d+]/matchfacts[.*]'], 
-            // https://www.fotmob.com/livescores/3411669/matchfacts/arsenal-vs-everton?date=20210423 
-            baseUrl: request.loadedUrl,
-        });
-
-        /* 
-        PURL заработали
-        - разделить handleFunc на DETAILS и COMMON;
-        - получить новые адреса для извлечения Наименований команд и Времени\счета игры из DETAILS;
-        - изучить INPUT и OUTPUT;
-        - сформировать return result.
-        **/
-
-        // const teamElements = $(`span.css-1i87lf9-TeamName`);
-        // const timeElements = $(`span.css-8o8lqm`);
-
-        // const teamNames = [];
-        // const time = [];
-
-        // const result = [];
-
-        // teamElements.each((i) => teamNames.push(teamElements.eq(i).text()));
-        // timeElements.each((i) => time.push(timeElements.eq(i).text()));
-
-        // for (let i=0; i<timeElements.length; i++) {
-        //     result.push(`${teamNames.shift()} - ${time.shift()} - ${teamNames.shift()}`);
-        // }
-
-        // console.log(result);
-
-        console.log(`Enqueueing ${enqueued.length} URLs`);
+        if (!request.userData.detailPage) {
+            const enqueued = await enqueueLinks({
+                $,
+                requestQueue,
+                selector: `a[href]`,
+                pseudoUrls: [`https://www.fotmob.com/livescores/[\\d+]/matchfacts[.*]`],
+                baseUrl: request.loadedUrl,
+                transformRequestFunction: req => {
+                    req.userData.detailPage = true;
+                    return req;
+                }
+            });
+            // console.log(`Enqueueing ${enqueued.length} URLs`);
+        } else {
+            let teamNameELements = $(`span.css-nquafn-MfHeaderTeamTitle`);
+            console.log(`${teamNameELements.eq(0).text()} - ${teamNameELements.eq(1).text()}`);
+        }
     };
 
     const crawler = new Apify.CheerioCrawler({
@@ -56,3 +35,12 @@ Apify.main(async () => {
 
     await crawler.run();
 });
+
+
+    /* 
+    PURL заработали
+    - разделить handleFunc на DETAILS и COMMON;
+    - получить новые адреса для извлечения Наименований команд и Времени\счета игры из DETAILS;
+    - изучить INPUT и OUTPUT;
+    - сформировать return result. 
+    **/
