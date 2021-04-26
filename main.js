@@ -5,39 +5,36 @@ const {
 
 Apify.main(async () => {
     const requestQueue = await Apify.openRequestQueue();
-    await requestQueue.addRequest({ url: `https://fotmob.com`});
+    await requestQueue.addRequest({ url: `https://fotmob.com` });
 
     const handlePageFunction = async ({ request, $ }) => {
-        const title = $(`title`).text();
-        console.log(`The title of ${request.url} is: ${title}.`);
+        console.log(`processing ${request.url}`)
+        if (!request.userData.detailPage) {
+            const enqueued = await enqueueLinks({
+                $,
+                requestQueue,
+                selector: `a[href]`,
+                pseudoUrls: [`https://www.fotmob.com/livescores/[\\d+]/matchfacts[.*]`],
+                baseUrl: request.loadedUrl,
+                transformRequestFunction: req => {
+                    req.userData.detailPage = true;
+                    return req;
+                }
+            });
+            console.log(`Enqueueing ${enqueued.length} URLs`);
+        } else {
+            const teamNameELements = $(`span.css-nquafn-MfHeaderTeamTitle`);
+            const teamHome = teamNameELements.eq(0).text();
+            const teamGuest = teamNameELements.eq(1).text();
+            console.log(`${teamHome} - ${teamGuest}`);
+            const results = {
+                url: request.url,
+                teamHome,
+                teamGuest,
+            };
 
-        // const enqueued = await enqueueLinks({
-        //     $,
-        //     requestQueue,
-        //     selector: `a[href]`,
-        //     // pseudoUrls: ['https://www.fotmob.com/livescores/[\d+]/matchfacts[.*]'], 
-        //     // https://www.fotmob.com/livescores/3411669/matchfacts/arsenal-vs-everton?date=20210423 
-        //     baseUrl: request.loadedUrl,
-        // });
-
-        const teamElements = $(`span.css-1i87lf9-TeamName`);
-        const timeElements = $(`span.css-8o8lqm`);
-
-        const teamNames = [];
-        const time = [];
-
-        const result = [];
-
-        teamElements.each((i) => teamNames.push(teamElements.eq(i).text()));
-        timeElements.each((i) => time.push(timeElements.eq(i).text()));
-
-        for (let i=0; i<timeElements.length; i++) {
-            result.push(`${teamNames.shift()} - ${time.shift()} - ${teamNames.shift()}`);
+            await Apify.pushData(results);
         }
-
-        console.log(result);
-
-        // console.log(`Enqueueing ${enqueued.length} URLs`);
     };
 
     const crawler = new Apify.CheerioCrawler({
@@ -48,3 +45,9 @@ Apify.main(async () => {
 
     await crawler.run();
 });
+
+
+    /* 
+    - получить новые адреса для извлечения Наименований команд и Времени\счета игры из DETAILS;
+    - изучить INPUT и OUTPUT;
+    **/
