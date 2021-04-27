@@ -8,7 +8,7 @@ Apify.main(async () => {
     await requestQueue.addRequest({ url: `https://fotmob.com` });
 
     const handlePageFunction = async ({ request, $ }) => {
-        console.log(`processing ${request.url}`)
+        // console.log(`processing ${request.url}`)
         if (!request.userData.detailPage) {
             const enqueued = await enqueueLinks({
                 $,
@@ -21,19 +21,19 @@ Apify.main(async () => {
                     return req;
                 }
             });
-            console.log(`Enqueueing ${enqueued.length} URLs`);
+            // console.log(`Enqueueing ${enqueued.length} URLs`);
         } else {
             const teamNameELements = $(`span.css-nquafn-MfHeaderTeamTitle`);
-            const teamHome = teamNameELements.eq(0).text();
-            const teamGuest = teamNameELements.eq(1).text();
-            console.log(`${teamHome} - ${teamGuest}`);
-            const results = {
-                url: request.url,
-                teamHome,
-                teamGuest,
-            };
 
-            await Apify.pushData(results);
+            const result = {
+                url: request.url,
+                teamHome: teamNameELements.eq(0).text(),
+                teamGuest: teamNameELements.eq(1).text(),
+                matchInfo: $(`span.css-jkaqxa`).text(),
+            };
+            console.log(`${result.teamHome} - ${result.teamGuest} : ${result.matchInfo}`);
+
+            await Apify.pushData(result);
         }
     };
 
@@ -45,9 +45,3 @@ Apify.main(async () => {
 
     await crawler.run();
 });
-
-
-    /* 
-    - получить новые адреса для извлечения Наименований команд и Времени\счета игры из DETAILS;
-    - изучить INPUT и OUTPUT;
-    **/
